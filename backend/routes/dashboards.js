@@ -3,9 +3,9 @@ const router = express.Router();
 const Dashboard = require('../models/Dashboard');
 const DashboardLayout = require('../models/DashboardLayout');
 const DashboardShare = require('../models/DashboardShare');
-const { authenticateToken } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', protect, async (req, res) => {
   try {
     const includeShared = req.query.include_shared !== 'false';
     const dashboards = await Dashboard.findByUserId(req.user.id, includeShared);
@@ -25,7 +25,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', protect, async (req, res) => {
   try {
     const { id } = req.params;
     const dashboard = await Dashboard.findById(id);
@@ -66,7 +66,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const { name, description, grid_config, widgets } = req.body;
 
@@ -117,7 +117,7 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', protect, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -156,7 +156,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', protect, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -191,7 +191,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/:id/duplicate', authenticateToken, async (req, res) => {
+router.post('/:id/duplicate', protect, async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
@@ -250,7 +250,7 @@ router.post('/:id/duplicate', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/:id/shares', authenticateToken, async (req, res) => {
+router.get('/:id/shares', protect, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -286,7 +286,7 @@ router.get('/:id/shares', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/:id/share', authenticateToken, async (req, res) => {
+router.post('/:id/share', protect, async (req, res) => {
   try {
     const { id } = req.params;
     const { user_id, permission_level, expires_at } = req.body;
@@ -336,7 +336,7 @@ router.post('/:id/share', authenticateToken, async (req, res) => {
   }
 });
 
-router.delete('/:id/share/:userId', authenticateToken, async (req, res) => {
+router.delete('/:id/share/:userId', protect, async (req, res) => {
   try {
     const { id, userId } = req.params;
 

@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const WidgetDefinition = require('../models/WidgetDefinition');
 const WidgetType = require('../models/WidgetType');
-const { authenticateToken } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', protect, async (req, res) => {
   try {
     const filters = {};
 
@@ -33,7 +33,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', protect, async (req, res) => {
   try {
     const { id } = req.params;
     const widgetDefinition = await WidgetDefinition.findById(id);
@@ -59,7 +59,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const {
       name,
@@ -108,7 +108,7 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', protect, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -155,7 +155,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', protect, async (req, res) => {
   try {
     const { id } = req.params;
 

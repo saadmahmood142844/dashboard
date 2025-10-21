@@ -4,7 +4,7 @@ const DashboardLayout = require('../models/DashboardLayout');
 const Dashboard = require('../models/Dashboard');
 const DashboardShare = require('../models/DashboardShare');
 const WidgetDefinition = require('../models/WidgetDefinition');
-const { authenticateToken } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
 async function checkDashboardPermission(dashboardId, userId, requiredPermission = 'view') {
   const dashboard = await Dashboard.findById(dashboardId);
@@ -33,7 +33,7 @@ async function checkDashboardPermission(dashboardId, userId, requiredPermission 
   return { allowed: true, dashboard };
 }
 
-router.get('/dashboard/:dashboardId', authenticateToken, async (req, res) => {
+router.get('/dashboard/:dashboardId', protect, async (req, res) => {
   try {
     const { dashboardId } = req.params;
 
@@ -62,7 +62,7 @@ router.get('/dashboard/:dashboardId', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', protect, async (req, res) => {
   try {
     const { id } = req.params;
     const layout = await DashboardLayout.findById(id);
@@ -96,7 +96,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const {
       dashboard_id,
@@ -154,7 +154,7 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', protect, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -193,7 +193,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-router.put('/dashboard/:dashboardId/bulk', authenticateToken, async (req, res) => {
+router.put('/dashboard/:dashboardId/bulk', protect, async (req, res) => {
   try {
     const { dashboardId } = req.params;
     const { layouts } = req.body;
@@ -232,7 +232,7 @@ router.put('/dashboard/:dashboardId/bulk', authenticateToken, async (req, res) =
   }
 });
 
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', protect, async (req, res) => {
   try {
     const { id } = req.params;
 

@@ -34,7 +34,10 @@ async function seedWidgetTypes() {
           showGrid: true,
           showLegend: true,
           curveType: 'smooth',
-          colors: ['#3b82f6', '#8b5cf6', '#ec4899']
+          colors: ['#3b82f6', '#8b5cf6', '#ec4899'],
+          showOil: true,
+          showGas: true,
+          showWater: true
         }
       },
       {
@@ -138,18 +141,6 @@ async function seedWidgetTypes() {
           showSeverity: true,
           autoRefresh: true,
           refreshInterval: 30000
-        }
-      },
-      {
-        name: 'flow_rate_chart',
-        component_name: 'FlowRateChartWidget',
-        default_config: {
-          timeRange: '24h',
-          showOil: true,
-          showGas: true,
-          showWater: true,
-          yAxisLabel: 'Flow Rate',
-          xAxisLabel: 'Time'
         }
       }
     ];

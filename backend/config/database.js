@@ -208,6 +208,108 @@ class Database {
         )
       `);
 
+      await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS widget_types (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          name VARCHAR(100) NOT NULL UNIQUE,
+          component_name VARCHAR(100) NOT NULL,
+          default_config JSONB NOT NULL DEFAULT '{}',
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS widget_definitions (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          name VARCHAR(200) NOT NULL,
+          description TEXT,
+          widget_type_id UUID NOT NULL REFERENCES widget_types(id) ON DELETE RESTRICT,
+          data_source_config JSONB NOT NULL DEFAULT '{}',
+          layout_config JSONB NOT NULL DEFAULT '{}',
+          created_by BIGINT NOT NULL REFERENCES "user"(id) ON DELETE RESTRICT,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS dashboards (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          name VARCHAR(200) NOT NULL,
+          description TEXT,
+          version INTEGER DEFAULT 1,
+          is_active BOOLEAN DEFAULT TRUE,
+          grid_config JSONB NOT NULL DEFAULT '{"cols": 12, "rowHeight": 100, "margin": [10, 10], "breakpoints": {"lg": 1200, "md": 996, "sm": 768, "xs": 480, "xxs": 0}, "containerPadding": [10, 10]}',
+          created_by BIGINT NOT NULL REFERENCES "user"(id) ON DELETE RESTRICT,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS dashboard_layouts (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+          widget_definition_id UUID NOT NULL REFERENCES widget_definitions(id) ON DELETE CASCADE,
+          layout_config JSONB NOT NULL DEFAULT '{"x": 0, "y": 0, "w": 4, "h": 2, "minW": 2, "minH": 1, "static": false}',
+          instance_config JSONB NOT NULL DEFAULT '{}',
+          display_order INTEGER DEFAULT 0,
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(dashboard_id, widget_definition_id)
+        )
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS dashboard_shares (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+          user_id BIGINT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+          permission_level VARCHAR(20) NOT NULL DEFAULT 'view',
+          shared_by BIGINT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+          shared_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          expires_at TIMESTAMPTZ,
+          UNIQUE(dashboard_id, user_id),
+          CHECK (permission_level IN ('view', 'edit', 'admin'))
+        )
+      `);
+
+      await client.query(`
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+          NEW.updated_at = CURRENT_TIMESTAMP;
+          RETURN NEW;
+        END;
+        $$ language 'plpgsql'
+      `);
+
+      await client.query(`
+        DROP TRIGGER IF EXISTS update_widget_definitions_updated_at ON widget_definitions;
+        CREATE TRIGGER update_widget_definitions_updated_at
+          BEFORE UPDATE ON widget_definitions
+          FOR EACH ROW
+          EXECUTE FUNCTION update_updated_at_column()
+      `);
+
+      await client.query(`
+        DROP TRIGGER IF EXISTS update_dashboards_updated_at ON dashboards;
+        CREATE TRIGGER update_dashboards_updated_at
+          BEFORE UPDATE ON dashboards
+          FOR EACH ROW
+          EXECUTE FUNCTION update_updated_at_column()
+      `);
+
+      await client.query(`
+        DROP TRIGGER IF EXISTS update_dashboard_layouts_updated_at ON dashboard_layouts;
+        CREATE TRIGGER update_dashboard_layouts_updated_at
+          BEFORE UPDATE ON dashboard_layouts
+          FOR EACH ROW
+          EXECUTE FUNCTION update_updated_at_column()
+      `);
+
       // Create indexes
       await client.query(`
         CREATE INDEX IF NOT EXISTS idx_user_email ON "user"(email);
@@ -228,6 +330,14 @@ class Database {
         CREATE INDEX IF NOT EXISTS idx_device_alarms_status_id ON device_alarms(status_id);
         CREATE INDEX IF NOT EXISTS idx_device_alarms_created_at ON device_alarms(created_at DESC);
         CREATE INDEX IF NOT EXISTS gin_device_alarms_metadata ON device_alarms USING gin(metadata);
+        CREATE INDEX IF NOT EXISTS idx_widget_definitions_created_by ON widget_definitions(created_by);
+        CREATE INDEX IF NOT EXISTS idx_widget_definitions_widget_type_id ON widget_definitions(widget_type_id);
+        CREATE INDEX IF NOT EXISTS idx_dashboards_created_by ON dashboards(created_by);
+        CREATE INDEX IF NOT EXISTS idx_dashboards_is_active ON dashboards(is_active);
+        CREATE INDEX IF NOT EXISTS idx_dashboard_layouts_dashboard_id ON dashboard_layouts(dashboard_id);
+        CREATE INDEX IF NOT EXISTS idx_dashboard_layouts_widget_def_id ON dashboard_layouts(widget_definition_id);
+        CREATE INDEX IF NOT EXISTS idx_dashboard_shares_dashboard_id ON dashboard_shares(dashboard_id);
+        CREATE INDEX IF NOT EXISTS idx_dashboard_shares_user_id ON dashboard_shares(user_id);
       `);
 
       await client.query('COMMIT');

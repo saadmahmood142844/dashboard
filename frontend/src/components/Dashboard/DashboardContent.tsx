@@ -4,13 +4,14 @@ import { useState, useEffect, useRef } from 'react';
 import { shouldSkipUpdate } from '../../utils/chartUtils';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
-import { apiService, DeviceChartData, HierarchyChartData, Device } from '../../services/api';
+import { apiService, DeviceChartData, HierarchyChartData, Device, DashboardLayout } from '../../services/api';
 import MetricsCards from './MetricsCards';
 import TopRegionsChart from './TopRegionsChart';
 import GVFWLRCharts from './GVFWLRCharts';
 import ProductionMap from './ProductionMap';
 import FlowRateCharts from './FlowRateCharts';
 import FractionsChart from './FractionsChart';
+import WidgetRenderer from './WidgetRenderer';
 import { Calendar, ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -163,6 +164,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [dashboardWidgets, setDashboardWidgets] = useState<DashboardLayout[]>([]);
+  const [widgetsLoading, setWidgetsLoading] = useState(false);
 
   // Time range options
   const timeRangeOptions = [
@@ -179,6 +182,30 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
     const option = timeRangeOptions.find((opt) => opt.value === timeRange);
     return option?.apiValue || 'day';
   };
+
+  useEffect(() => {
+    const loadDashboardWidgets = async () => {
+      if (!token) return;
+
+      setWidgetsLoading(true);
+      try {
+        const dashboards = await apiService.getUserDashboards(token);
+        if (dashboards.success && dashboards.data && dashboards.data.length > 0) {
+          const defaultDashboard = dashboards.data.find(d => d.name === 'Default Production Dashboard') || dashboards.data[0];
+          const layouts = await apiService.getDashboardLayouts(defaultDashboard.id, token);
+          if (layouts.success && layouts.data) {
+            setDashboardWidgets(layouts.data);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load dashboard widgets:', error);
+      } finally {
+        setWidgetsLoading(false);
+      }
+    };
+
+    loadDashboardWidgets();
+  }, [token]);
 
   // Load metrics data (only when device/hierarchy changes, not when time range changes)
   useEffect(() => {
@@ -381,7 +408,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                     } Dashboard`
                   : 'Production Dashboard'}
               </h1>
-              {isLoading && (
+              {(isLoading || widgetsLoading) && (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
                   <span
@@ -389,9 +416,20 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                       theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
                     }`}
                   >
-                    Loading...
+                    {widgetsLoading ? 'Loading dashboard...' : 'Loading...'}
                   </span>
                 </div>
+              )}
+              {dashboardWidgets.length > 0 && !widgetsLoading && (
+                <span
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    theme === 'dark'
+                      ? 'bg-green-900/30 text-green-400'
+                      : 'bg-green-100 text-green-700'
+                  }`}
+                >
+                  {dashboardWidgets.length} widgets loaded
+                </span>
               )}
             </div>
 

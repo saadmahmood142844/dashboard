@@ -1,0 +1,103 @@
+========================================
+DASHBOARD WIDGET SYSTEM - SETUP CHECKLIST
+========================================
+
+□ 1. START POSTGRESQL
+   Commands:
+   - Linux:  sudo systemctl start postgresql
+   - macOS:  brew services start postgresql
+
+   Verify: pg_isready -h localhost -p 5432
+
+□ 2. INSTALL DEPENDENCIES
+   Backend:
+   cd backend
+   npm install
+
+   Frontend:
+   cd frontend
+   npm install
+
+□ 3. SEED WIDGET TYPES (First time only)
+   cd backend
+   npm run seed:widgets
+
+   Expected: "✓ Widget types seeded successfully!"
+
+□ 4. SEED DEFAULT DASHBOARD (First time only)
+   cd backend
+   npm run seed:dashboard
+
+   Expected: "✓ Default dashboard seeded successfully!"
+   Should show: 10 widgets created
+
+□ 5. START BACKEND
+   cd backend
+   npm start
+
+   Expected: "Server running on port 5000"
+
+□ 6. START FRONTEND
+   cd frontend
+   npm run dev
+
+   Expected: "Local: http://localhost:5173"
+
+□ 7. VERIFY IN BROWSER
+   Open: http://localhost:5173
+   Login with your credentials
+
+   Look for:
+   ✓ Green badge: "10 widgets loaded"
+   ✓ All 4 KPI cards visible
+   ✓ All 4 line charts visible
+   ✓ Pie chart visible
+   ✓ Map visible
+   ✓ Everything works normally
+
+========================================
+TROUBLESHOOTING
+========================================
+
+Problem: Database connection error
+Fix: Check PostgreSQL is running
+     Verify DATABASE_URL in backend/.env
+
+Problem: "0 widgets loaded"
+Fix: Re-run seed scripts:
+     npm run seed:widgets
+     npm run seed:dashboard
+
+Problem: Widgets not displaying
+Fix: Check browser console for errors
+     Verify backend is running
+     Clear browser cache and reload
+
+========================================
+SUCCESS INDICATORS
+========================================
+
+✓ Backend logs: No database errors
+✓ Frontend: Green badge showing "10 widgets loaded"
+✓ Dashboard: All widgets visible and functional
+✓ No console errors in browser
+
+========================================
+WHAT YOU NOW HAVE
+========================================
+
+✓ Database-driven dashboard system
+✓ 10 widgets loaded from PostgreSQL
+✓ Same UI and functionality as before
+✓ Ready for future enhancements:
+  - Multiple dashboards
+  - User customization
+  - Drag & drop
+  - Widget templates
+
+========================================
+For detailed info, see:
+- QUICK_START.md
+- DASHBOARD_SETUP_GUIDE.md
+- IMPLEMENTATION_SUMMARY.md
+========================================

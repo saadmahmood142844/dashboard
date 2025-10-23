@@ -284,6 +284,42 @@ export interface AlarmsResponse {
   };
 }
 
+export interface Dashboard {
+  id: number;
+  name: string;
+  description?: string;
+  version: number;
+  is_active: boolean;
+  grid_config: any;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  creator_name?: string;
+}
+
+export interface DashboardLayout {
+  id: number;
+  dashboard_id: number;
+  widget_definition_id: number;
+  layout_config: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    minW?: number;
+    minH?: number;
+    static?: boolean;
+  };
+  instance_config: any;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+  widget_name: string;
+  widget_type_name: string;
+  component_name: string;
+  data_source_config: any;
+}
+
 class ApiService {
   private getErrorMessage(error: any): string {
     // Handle different types of errors with user-friendly messages
@@ -875,11 +911,29 @@ class ApiService {
   }>> {
     const params = new URLSearchParams();
     if (companyId) params.append('company_id', companyId.toString());
-    
+
     const queryString = params.toString();
     const url = `/charts/dashboard${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.makeRequest(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  async getDashboardLayouts(dashboardId: number, token: string): Promise<ApiResponse<DashboardLayout[]>> {
+    return this.makeRequest(`/dashboard-layouts/dashboard/${dashboardId}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  async getUserDashboards(token: string): Promise<ApiResponse<Dashboard[]>> {
+    return this.makeRequest('/dashboards', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,

@@ -10,6 +10,8 @@
     "seed:admin": "node scripts/seedAdmin.js",
     "seed:hierarchy": "node scripts/seedHierarchy.js",
     "seed:alarms": "node scripts/seedAlarms.js",
+    "seed:widgets": "node scripts/seedWidgets.js",
+    "seed:dashboard": "node scripts/seedDefaultDashboard.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

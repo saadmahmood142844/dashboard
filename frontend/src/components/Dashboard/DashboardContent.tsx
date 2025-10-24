@@ -5,12 +5,6 @@ import { shouldSkipUpdate } from '../../utils/chartUtils';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { apiService, DeviceChartData, HierarchyChartData, Device, DashboardLayout } from '../../services/api';
-import MetricsCards from './MetricsCards';
-import TopRegionsChart from './TopRegionsChart';
-import GVFWLRCharts from './GVFWLRCharts';
-import ProductionMap from './ProductionMap';
-import FlowRateCharts from './FlowRateCharts';
-import FractionsChart from './FractionsChart';
 import WidgetRenderer from './WidgetRenderer';
 import { Calendar, ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -194,13 +188,19 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
         console.log('📊 Dashboards received:', dashboards.data);
 
         if (dashboards.success && dashboards.data && dashboards.data.length > 0) {
-          const defaultDashboard = dashboards.data.find(d => d.name === 'Default Production Dashboard') || dashboards.data[0];
+          // Try to find 'Production Dashboard' or 'Production Overview', fallback to first active dashboard
+          const defaultDashboard =
+            dashboards.data.find(d => d.name === 'Production Dashboard') ||
+            dashboards.data.find(d => d.name === 'Production Overview') ||
+            dashboards.data.find(d => d.is_active) ||
+            dashboards.data[0];
+
           console.log('✅ Selected dashboard:', defaultDashboard.name, '(ID:', defaultDashboard.id + ')');
 
           const layouts = await apiService.getDashboardLayouts(defaultDashboard.id, token);
           console.log('📦 Widget layouts loaded:', layouts.data?.length || 0);
 
-          if (layouts.success && layouts.data) {
+          if (layouts.success && layouts.data && layouts.data.length > 0) {
             console.log('🎨 Widget configurations from database:');
             layouts.data.forEach((widget, index) => {
               console.log(`  ${index + 1}. ${widget.widget_name} (${widget.widget_type_name})`);
@@ -208,7 +208,11 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
               console.log(`     Config:`, widget.data_source_config);
             });
             setDashboardWidgets(layouts.data);
+          } else {
+            console.warn('⚠️ No widgets found for this dashboard. Dashboard might be empty.');
           }
+        } else {
+          console.warn('⚠️ No dashboards found for this user.');
         }
       } catch (error) {
         console.error('❌ Failed to load dashboard widgets:', error);
@@ -459,94 +463,76 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
             </div>
           </div>
 
-          {/* Metrics Cards */}
-          <MetricsCards
-            selectedHierarchy={selectedHierarchy}
-            selectedDevice={selectedDevice}
-            chartData={metricsChartData}
-            hierarchyChartData={metricsHierarchyChartData}
-            lastRefresh={lastRefresh}
-            isDeviceOffline={metricsChartData?.device?.status === 'Offline'}
-          />
-
-          {/* Flow Rate Charts */}
-          <FlowRateCharts
-            chartData={flowRateChartData}
-            hierarchyChartData={flowRateHierarchyChartData}
-            timeRange={timeRange as '1day' | '7days' | '1month'}
-            isDeviceOffline={flowRateChartData?.device?.status === 'Offline'}
-          />
-
-          {/* Main Content Grid - Desktop */}
-          <div className="hidden md:grid md:grid-cols-1 lg:grid-cols-2 gap-4 my-4">
-            <div className="w-full">
-              <FractionsChart
-                chartData={metricsChartData}
-                hierarchyChartData={metricsHierarchyChartData}
-                isDeviceOffline={metricsChartData?.device?.status === 'Offline'}
-              />
-            </div>
-
-            {/* GVF/WLR Charts */}
-            <div className="w-full">
+          {/* Dynamic Widget Grid - Desktop */}
+          {dashboardWidgets.length > 0 ? (
+            <>
               <div
-                className={`rounded-lg p-2 h-full ${
-                  theme === 'dark'
-                    ? 'bg-[#162345]'
-                    : 'bg-white border border-gray-200'
-                }`}
+                className="hidden md:grid gap-4"
+                style={{
+                  gridTemplateColumns: 'repeat(12, 1fr)',
+                  gridAutoRows: '100px',
+                }}
               >
-                <GVFWLRCharts
-                  chartData={metricsChartData}
-                  hierarchyChartData={metricsHierarchyChartData}
-                  isDeviceOffline={metricsChartData?.device?.status === 'Offline'}
-                />
+                {dashboardWidgets.map((widget) => (
+                  <div
+                    key={widget.id}
+                    style={{
+                      gridColumn: `span ${widget.layout_config.w}`,
+                      gridRow: `span ${widget.layout_config.h}`,
+                    }}
+                    className="min-h-0 min-w-0"
+                  >
+                    <WidgetRenderer
+                      widget={widget}
+                      chartData={flowRateChartData}
+                      hierarchyChartData={flowRateHierarchyChartData}
+                      selectedDevice={selectedDevice}
+                      selectedHierarchy={selectedHierarchy}
+                      timeRange={timeRange}
+                      lastRefresh={lastRefresh}
+                      isDeviceOffline={metricsChartData?.device?.status === 'Offline'}
+                    />
+                  </div>
+                ))}
               </div>
-            </div>
-          </div>
 
-          {/* Main Content Grid - Mobile (reversed order) */}
-          <div className="md:hidden grid grid-cols-1 gap-4 my-4">
-            {/* GVF/WLR Charts first on mobile */}
-            <div className="w-full">
-              <div
-                className={`rounded-lg p-2 h-full ${
-                  theme === 'dark'
-                    ? 'bg-[#162345]'
-                    : 'bg-white border border-gray-200'
-                }`}
-              >
-                <GVFWLRCharts
-                  chartData={metricsChartData}
-                  hierarchyChartData={metricsHierarchyChartData}
-                  isDeviceOffline={metricsChartData?.device?.status === 'Offline'}
-                />
+              {/* Dynamic Widget Grid - Mobile (Single Column) */}
+              <div className="md:hidden grid grid-cols-1 gap-4">
+                {dashboardWidgets.map((widget) => (
+                  <div
+                    key={widget.id}
+                    style={{
+                      minHeight: `${widget.layout_config.h * 100}px`,
+                    }}
+                  >
+                    <WidgetRenderer
+                      widget={widget}
+                      chartData={flowRateChartData}
+                      hierarchyChartData={flowRateHierarchyChartData}
+                      selectedDevice={selectedDevice}
+                      selectedHierarchy={selectedHierarchy}
+                      timeRange={timeRange}
+                      lastRefresh={lastRefresh}
+                      isDeviceOffline={metricsChartData?.device?.status === 'Offline'}
+                    />
+                  </div>
+                ))}
               </div>
+            </>
+          ) : !widgetsLoading ? (
+            <div className={`text-center py-8 ${
+              theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              <p>No widgets configured for this dashboard.</p>
+              <p className="text-sm mt-2">Run the seeding script to populate widgets.</p>
             </div>
-
-            {/* Fractions Chart second on mobile */}
-            <div className="w-full">
-              <FractionsChart
-                chartData={metricsChartData}
-                hierarchyChartData={metricsHierarchyChartData}
-                isDeviceOffline={metricsChartData?.device?.status === 'Offline'}
-              />
-            </div>
-          </div>
-
-          {/* Production Map */}
-          <div className="mt-2">
-            <ProductionMap
-              selectedHierarchy={selectedHierarchy}
-              selectedDevice={selectedDevice}
-            />
-          </div>
+          ) : null}
 
           {/* Version Info */}
-          <div className={`text-center py-4 text-xs ${
+          <div className={`text-center py-4 mt-8 text-xs ${
             theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
           }`}>
-            Version 1.0.0
+            Version 1.0.0 - Dynamic Widget System
           </div>
         </>
       )}

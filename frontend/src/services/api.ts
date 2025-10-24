@@ -285,7 +285,7 @@ export interface AlarmsResponse {
 }
 
 export interface Dashboard {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   version: number;
@@ -298,9 +298,9 @@ export interface Dashboard {
 }
 
 export interface DashboardLayout {
-  id: number;
-  dashboard_id: number;
-  widget_definition_id: number;
+  id: string;
+  dashboard_id: string;
+  widget_definition_id: string;
   layout_config: {
     x: number;
     y: number;
@@ -923,7 +923,7 @@ class ApiService {
     });
   }
 
-  async getDashboardLayouts(dashboardId: number, token: string): Promise<ApiResponse<DashboardLayout[]>> {
+  async getDashboardLayouts(dashboardId: string, token: string): Promise<ApiResponse<DashboardLayout[]>> {
     return this.makeRequest(`/dashboard-layouts/dashboard/${dashboardId}`, {
       method: 'GET',
       headers: {

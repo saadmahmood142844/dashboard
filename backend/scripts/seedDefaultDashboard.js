@@ -144,25 +144,26 @@ async function seedDefaultDashboard() {
       },
       {
         name: 'Fractions Chart',
-        description: 'Production fractions (GVF/WLR) combined chart',
+        description: 'Production fractions (GVF/WLR) line chart',
         widget_type: 'line_chart',
         data_source_config: {
           metric: 'fractions',
           metrics: ['gvf', 'wlr'],
           yAxisLabel: 'Percentage (%)'
         },
-        layout_config: { x: 6, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
+        layout_config: { x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
         display_order: 8
       },
       {
-        name: 'Top Regions Pie Chart',
-        description: 'Top producing regions distribution',
-        widget_type: 'pie_chart',
+        name: 'GVF/WLR Donut Charts',
+        description: 'Gas Volume Fraction and Water Liquid Ratio circular donut charts',
+        widget_type: 'donut_chart',
         data_source_config: {
-          dataType: 'hierarchy',
-          aggregation: 'region'
+          metrics: ['gvf', 'wlr'],
+          showLabels: true,
+          showLegend: true
         },
-        layout_config: { x: 0, y: 10, w: 6, h: 5, minW: 4, minH: 4 },
+        layout_config: { x: 6, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
         display_order: 9
       },
       {

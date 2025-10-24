@@ -187,18 +187,31 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
     const loadDashboardWidgets = async () => {
       if (!token) return;
 
+      console.log('🔄 Loading dashboard widgets from database...');
       setWidgetsLoading(true);
       try {
         const dashboards = await apiService.getUserDashboards(token);
+        console.log('📊 Dashboards received:', dashboards.data);
+
         if (dashboards.success && dashboards.data && dashboards.data.length > 0) {
           const defaultDashboard = dashboards.data.find(d => d.name === 'Default Production Dashboard') || dashboards.data[0];
+          console.log('✅ Selected dashboard:', defaultDashboard.name, '(ID:', defaultDashboard.id + ')');
+
           const layouts = await apiService.getDashboardLayouts(defaultDashboard.id, token);
+          console.log('📦 Widget layouts loaded:', layouts.data?.length || 0);
+
           if (layouts.success && layouts.data) {
+            console.log('🎨 Widget configurations from database:');
+            layouts.data.forEach((widget, index) => {
+              console.log(`  ${index + 1}. ${widget.widget_name} (${widget.widget_type_name})`);
+              console.log(`     Position: x=${widget.layout_config.x}, y=${widget.layout_config.y}, w=${widget.layout_config.w}, h=${widget.layout_config.h}`);
+              console.log(`     Config:`, widget.data_source_config);
+            });
             setDashboardWidgets(layouts.data);
           }
         }
       } catch (error) {
-        console.error('Failed to load dashboard widgets:', error);
+        console.error('❌ Failed to load dashboard widgets:', error);
       } finally {
         setWidgetsLoading(false);
       }

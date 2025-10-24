@@ -63,119 +63,164 @@ async function seedDefaultDashboard() {
       widgetTypeMap[row.name] = row.id;
     });
 
-    // Define widget definitions for current dashboard components
+    // Define widget definitions matching the ACTUAL current dashboard structure
+    // Based on DashboardContent.tsx components:
+    // 1. MetricsCards (4 KPI cards in a row)
+    // 2. FlowRateCharts (3 line charts: OFR, WFR, GFR)
+    // 3. FractionsChart (1 line chart)
+    // 4. GVFWLRCharts (2 donut charts side-by-side)
+    // 5. ProductionMap (1 map)
+
     const widgetDefinitions = [
+      // Row 1: Metrics Cards (4 KPIs)
       {
-        name: 'OFR KPI Card',
-        description: 'Oil Flow Rate KPI metric card',
+        name: 'Oil Flow Rate Card',
+        description: 'Total Oil Flow Rate metric card with live updates',
         widget_type: 'kpi',
-        data_source_config: { metric: 'ofr', unit: 'l/min' },
-        layout_config: { x: 0, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+        data_source_config: {
+          metric: 'total_ofr',
+          unit: 'l/min',
+          label: 'Total OFR',
+          component: 'MetricsCards',
+          cardIndex: 0
+        },
+        layout_config: { x: 0, y: 0, w: 3, h: 2, minW: 2, minH: 2, static: false },
         display_order: 1
       },
       {
-        name: 'WFR KPI Card',
-        description: 'Water Flow Rate KPI metric card',
+        name: 'Water Flow Rate Card',
+        description: 'Total Water Flow Rate metric card with live updates',
         widget_type: 'kpi',
-        data_source_config: { metric: 'wfr', unit: 'l/min' },
-        layout_config: { x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+        data_source_config: {
+          metric: 'total_wfr',
+          unit: 'l/min',
+          label: 'Total WFR',
+          component: 'MetricsCards',
+          cardIndex: 1
+        },
+        layout_config: { x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2, static: false },
         display_order: 2
       },
       {
-        name: 'GFR KPI Card',
-        description: 'Gas Flow Rate KPI metric card',
+        name: 'Gas Flow Rate Card',
+        description: 'Total Gas Flow Rate metric card with live updates',
         widget_type: 'kpi',
-        data_source_config: { metric: 'gfr', unit: 'l/min' },
-        layout_config: { x: 6, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+        data_source_config: {
+          metric: 'total_gfr',
+          unit: 'l/min',
+          label: 'Total GFR',
+          component: 'MetricsCards',
+          cardIndex: 2
+        },
+        layout_config: { x: 6, y: 0, w: 3, h: 2, minW: 2, minH: 2, static: false },
         display_order: 3
       },
       {
-        name: 'Last Refresh Card',
-        description: 'Last data refresh timestamp card',
+        name: 'Last Refresh Time',
+        description: 'Last data refresh timestamp display',
         widget_type: 'kpi',
-        data_source_config: { metric: 'last_refresh' },
-        layout_config: { x: 9, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+        data_source_config: {
+          metric: 'last_refresh',
+          label: 'Last Refresh',
+          component: 'MetricsCards',
+          cardIndex: 3
+        },
+        layout_config: { x: 9, y: 0, w: 3, h: 2, minW: 2, minH: 2, static: false },
         display_order: 4
       },
+
+      // Row 2: Flow Rate Line Charts (OFR, WFR)
       {
-        name: 'OFR Line Chart',
-        description: 'Oil Flow Rate trend line chart',
+        name: 'OFR Trend Chart',
+        description: 'Oil Flow Rate time-series trend chart',
         widget_type: 'line_chart',
         data_source_config: {
           metric: 'ofr',
           timeRange: 'dynamic',
           yAxisLabel: 'OFR (l/min)',
-          showOil: true,
-          showGas: false,
-          showWater: false
+          title: 'Oil Flow Rate',
+          unit: 'l/min',
+          dataKey: 'ofr',
+          component: 'FlowRateCharts'
         },
-        layout_config: { x: 0, y: 2, w: 6, h: 4, minW: 4, minH: 3 },
+        layout_config: { x: 0, y: 2, w: 6, h: 4, minW: 4, minH: 3, static: false },
         display_order: 5
       },
       {
-        name: 'WFR Line Chart',
-        description: 'Water Flow Rate trend line chart',
+        name: 'WFR Trend Chart',
+        description: 'Water Flow Rate time-series trend chart',
         widget_type: 'line_chart',
         data_source_config: {
           metric: 'wfr',
           timeRange: 'dynamic',
           yAxisLabel: 'WFR (l/min)',
-          showOil: false,
-          showGas: false,
-          showWater: true
+          title: 'Water Flow Rate',
+          unit: 'l/min',
+          dataKey: 'wfr',
+          component: 'FlowRateCharts'
         },
-        layout_config: { x: 6, y: 2, w: 6, h: 4, minW: 4, minH: 3 },
+        layout_config: { x: 6, y: 2, w: 6, h: 4, minW: 4, minH: 3, static: false },
         display_order: 6
       },
+
+      // Row 3: GFR Chart
       {
-        name: 'GFR Line Chart',
-        description: 'Gas Flow Rate trend line chart',
+        name: 'GFR Trend Chart',
+        description: 'Gas Flow Rate time-series trend chart',
         widget_type: 'line_chart',
         data_source_config: {
           metric: 'gfr',
           timeRange: 'dynamic',
           yAxisLabel: 'GFR (l/min)',
-          showOil: false,
-          showGas: true,
-          showWater: false
+          title: 'Gas Flow Rate',
+          unit: 'l/min',
+          dataKey: 'gfr',
+          component: 'FlowRateCharts'
         },
-        layout_config: { x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
+        layout_config: { x: 0, y: 6, w: 12, h: 4, minW: 4, minH: 3, static: false },
         display_order: 7
       },
+
+      // Row 4: Fractions Chart and GVF/WLR Charts
       {
-        name: 'Fractions Chart',
-        description: 'Production fractions (GVF/WLR) line chart',
+        name: 'Production Fractions',
+        description: 'Oil, Water, and Gas production fractions over time',
         widget_type: 'line_chart',
         data_source_config: {
           metric: 'fractions',
-          metrics: ['gvf', 'wlr'],
-          yAxisLabel: 'Percentage (%)'
+          metrics: ['gor', 'wlr'],
+          yAxisLabel: 'Ratio',
+          title: 'Production Fractions',
+          component: 'FractionsChart'
         },
-        layout_config: { x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
+        layout_config: { x: 0, y: 10, w: 6, h: 4, minW: 4, minH: 3, static: false },
         display_order: 8
       },
       {
-        name: 'GVF/WLR Donut Charts',
-        description: 'Gas Volume Fraction and Water Liquid Ratio circular donut charts',
+        name: 'GVF and WLR Gauges',
+        description: 'Gas Volume Fraction and Water Liquid Ratio percentage gauges',
         widget_type: 'donut_chart',
         data_source_config: {
           metrics: ['gvf', 'wlr'],
-          showLabels: true,
-          showLegend: true
+          title: 'GVF & WLR',
+          component: 'GVFWLRCharts'
         },
-        layout_config: { x: 6, y: 6, w: 6, h: 4, minW: 4, minH: 3 },
+        layout_config: { x: 6, y: 10, w: 6, h: 4, minW: 4, minH: 3, static: false },
         display_order: 9
       },
+
+      // Row 5: Production Map
       {
-        name: 'Production Map',
-        description: 'Geographic production visualization map',
+        name: 'Production Map View',
+        description: 'Geographic map showing all production sites and devices',
         widget_type: 'map',
         data_source_config: {
           showDevices: true,
           showHierarchy: true,
-          clusterMarkers: true
+          clusterMarkers: true,
+          component: 'ProductionMap'
         },
-        layout_config: { x: 0, y: 15, w: 12, h: 6, minW: 6, minH: 4 },
+        layout_config: { x: 0, y: 14, w: 12, h: 6, minW: 6, minH: 4, static: false },
         display_order: 10
       }
     ];
